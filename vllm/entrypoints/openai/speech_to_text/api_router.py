@@ -6,7 +6,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, FastAPI, Form, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 
 from vllm.entrypoints.openai.engine.protocol import ErrorResponse
 from vllm.entrypoints.openai.speech_to_text.protocol import (
@@ -82,6 +82,14 @@ async def create_transcriptions(
 
     elif isinstance(generator, TranscriptionResponseVariant):
         return JSONResponse(content=generator.model_dump())
+
+    if isinstance(generator, str):
+        media_type = "text/plain"
+        if request.response_format == "vtt":
+            media_type = "text/vtt"
+        elif request.response_format == "srt":
+            media_type = "application/x-subrip"
+        return PlainTextResponse(content=generator, media_type=media_type)
 
     return StreamingResponse(content=generator, media_type="text/event-stream")
 

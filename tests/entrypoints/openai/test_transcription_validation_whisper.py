@@ -244,6 +244,38 @@ async def test_audio_with_timestamp(mary_had_lamb, whisper_client):
 
 
 @pytest.mark.asyncio
+async def test_audio_with_srt(mary_had_lamb, whisper_client):
+    transcription = await whisper_client.audio.transcriptions.create(
+        model=MODEL_NAME,
+        file=mary_had_lamb,
+        language="en",
+        response_format="srt",
+        temperature=0.0,
+    )
+    lines = transcription.splitlines()
+    assert lines[0] == "1"
+    assert " --> " in lines[1]
+    assert "," in lines[1]
+    assert "Mary had a little lamb" in transcription
+
+
+@pytest.mark.asyncio
+async def test_audio_with_vtt(mary_had_lamb, whisper_client):
+    transcription = await whisper_client.audio.transcriptions.create(
+        model=MODEL_NAME,
+        file=mary_had_lamb,
+        language="en",
+        response_format="vtt",
+        temperature=0.0,
+    )
+    lines = transcription.splitlines()
+    assert lines[0] == "WEBVTT"
+    cue_line = next(line for line in lines if " --> " in line)
+    assert "." in cue_line
+    assert "Mary had a little lamb" in transcription
+
+
+@pytest.mark.asyncio
 async def test_audio_with_max_tokens(whisper_client, mary_had_lamb):
     transcription = await whisper_client.audio.transcriptions.create(
         model=MODEL_NAME,
